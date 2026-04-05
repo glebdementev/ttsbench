@@ -11,8 +11,8 @@ class BandwidthDetector(BaseDetector):
 
     Метрики:
     - Спектральный центроид — среднее взвешенное частот по мощности.
-    - Доля энергии ВЧ (4-8 кГц) относительно (2-4 кГц) — широкополосный
-      показатель без привязки к узким полосам.
+    - Доля энергии выше 6 кГц от общей — устойчива к локальным провалам
+      в спектре, отражает реальную ширину полосы.
     """
 
     name = "bandwidth"
@@ -33,22 +33,17 @@ class BandwidthDetector(BaseDetector):
         # --- Спектральный центроид ---
         centroid = float(np.average(freqs, weights=avg_power + 1e-20))
 
-        # --- Доля ВЧ энергии: (4-8 кГц) / (2-4 кГц) ---
-        band_2_4k = avg_power[(freqs >= 2000) & (freqs < 4000)].sum() + 1e-20
-        band_4_8k = avg_power[(freqs >= 4000) & (freqs < 8000)].sum()
-        hf_ratio = float(band_4_8k / band_2_4k)
-
-        # --- Доля энергии выше 4 кГц от общей ---
-        hf_energy_frac = float(avg_power[freqs >= 4000].sum() / total_power)
+        # --- Доля энергии выше 6 кГц от общей ---
+        hf_energy_frac = float(avg_power[freqs >= 6000].sum() / total_power)
 
         # --- Оценка ---
         # Центроид: <=400 → 0 (очень узко), >=900 → 100 (полная полоса)
         centroid_score = float(np.clip((centroid - 400) / 500 * 100, 0, 100))
 
-        # Доля ВЧ: <=0.1 → 0, >=0.8 → 100
-        hf_ratio_score = float(np.clip((hf_ratio - 0.1) / 0.7 * 100, 0, 100))
+        # Доля ВЧ >6 кГц: <=0.002 → 0, >=0.025 → 100
+        hf_score = float(np.clip((hf_energy_frac - 0.002) / 0.023 * 100, 0, 100))
 
-        score = 0.5 * centroid_score + 0.5 * hf_ratio_score
+        score = 0.5 * centroid_score + 0.5 * hf_score
 
         # --- Покадровое обнаружение узкой полосы ---
         frame_power = S ** 2
@@ -89,8 +84,7 @@ class BandwidthDetector(BaseDetector):
             regions=regions,
             raw_metrics={
                 "spectral_centroid_hz": round(centroid, 0),
-                "hf_ratio_4_8k_over_2_4k": round(hf_ratio, 3),
-                "hf_energy_fraction": round(hf_energy_frac, 4),
+                "hf_energy_fraction_6k": round(hf_energy_frac, 4),
             },
         )
 
