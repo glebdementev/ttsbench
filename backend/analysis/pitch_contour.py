@@ -115,21 +115,20 @@ class PitchContourDetector(BaseDetector):
         reversal_rate = float(np.mean(np.abs(np.diff(signs)) > 0)) if len(signs) > 1 else 0.5
 
         # --- Scoring ---
-        # Modulation slope: natural -1.5 to -2.5; TTS often -0.5 to -1.0.
-        # More negative = better phrase structure.
-        slope_score = _trapezoid(-mod_slope, 0.3, 1.3, 2.5, 3.5)
+        # Modulation slope: natural -1.5 to -2.5; TTS often -0.8 to -1.0.
+        slope_score = _trapezoid(-mod_slope, 0.2, 1.5, 2.5, 3.5)
 
-        # Var CV: natural ~1.3-2.0; uniform TTS <1.0.
-        var_cv_score = _trapezoid(var_cv, 0.3, 1.2, 2.0, 3.0)
+        # Var CV: natural ~1.6-2.5; TTS ~0.9-1.5.
+        var_cv_score = _trapezoid(var_cv, 0.2, 1.6, 2.5, 3.5)
 
-        # Mean run: natural ~5-7; choppy <4.
-        run_score = _trapezoid(mean_run, 2.0, 4.5, 7.0, 10.0)
+        # Mean run: natural ~5.5-8; TTS ~4-4.7.
+        run_score = _trapezoid(mean_run, 2.0, 5.5, 8.0, 12.0)
 
-        # Micro CV: natural ~1.1-1.4; over-controlled <0.9.
-        micro_score = _trapezoid(micro_cv, 0.3, 1.05, 1.4, 2.5)
+        # Micro CV: natural ~1.2-1.8; TTS ~0.95-1.09.
+        micro_score = _trapezoid(micro_cv, 0.2, 1.2, 1.8, 2.8)
 
-        # Reversal rate: natural ~0.20-0.25; choppy >0.32.
-        reversal_score = _trapezoid(reversal_rate, 0.10, 0.20, 0.25, 0.38)
+        # Reversal rate: natural ~0.19-0.22.
+        reversal_score = _trapezoid(reversal_rate, 0.08, 0.19, 0.22, 0.35)
 
         score = (
             0.30 * slope_score
