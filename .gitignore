@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+.venv/
+data/
+.python-version
+uv.lock

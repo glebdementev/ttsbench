@@ -1,0 +1,14 @@
+[project]
+name = "ttsbench"
+version = "0.1.0"
+description = "TTS audio quality analysis and benchmarking"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.29",
+    "python-multipart>=0.0.9",
+    "librosa>=0.10",
+    "praat-parselmouth>=0.4",
+    "numpy>=1.24",
+    "scipy>=1.12",
+]

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TTSBench</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header>
+    <h1>TTSBench</h1>
+    <p class="subtitle">Анализ качества TTS-аудио</p>
+  </header>
+
+  <main>
+    <!-- Upload -->
+    <div class="upload-section">
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept=".wav,.mp3,.flac,.ogg" hidden>
+        <span class="drop-text" id="dropText">Перетащите аудиофайл сюда</span>
+        <span class="drop-hint">WAV, MP3, FLAC, OGG</span>
+      </div>
+      <div class="upload-row">
+        <input type="text" id="aliasInput" placeholder="Алиас (напр. ElevenLabs v2)" class="alias-input">
+        <button id="addBtn" disabled>Добавить</button>
+      </div>
+    </div>
+
+    <!-- Library table -->
+    <section class="library-section">
+      <div class="library-header">
+        <h2>Библиотека</h2>
+        <button id="reanalyzeBtn" class="btn-secondary" disabled>Перезапустить все</button>
+      </div>
+      <table class="library-table" id="libraryTable">
+        <thead>
+          <tr>
+            <th>Алиас</th>
+            <th>Балл</th>
+            <th class="th-sub">Щелч.</th>
+            <th class="th-sub">Шум</th>
+            <th class="th-sub">Робот.</th>
+            <th class="th-sub">Сглаж.</th>
+            <th class="th-sub">Гуд.</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="libraryBody"></tbody>
+      </table>
+      <p class="empty-msg" id="emptyMsg">Нет файлов. Загрузите аудио выше.</p>
+    </section>
+
+    <!-- Loading -->
+    <div id="loading" class="loading hidden">
+      <div class="spinner"></div>
+      <span id="loadingText">Анализ аудио...</span>
+    </div>
+
+    <!-- Detail panel -->
+    <section id="detail" class="detail hidden">
+      <h2 id="detailTitle" class="detail-title"></h2>
+
+      <div class="score-card">
+        <div class="score-value" id="scoreValue">--</div>
+        <div class="score-label">Оценка качества</div>
+        <div class="score-explain" id="scoreExplain"></div>
+      </div>
+
+      <div class="waveform-toolbar">
+        <div class="playback-controls">
+          <button class="icon-btn" id="playBtn" title="Воспроизведение / Пауза">&#9654;</button>
+          <button class="icon-btn" id="stopBtn" title="Стоп">&#9632;</button>
+          <span class="time-display" id="timeDisplay">0:00 / 0:00</span>
+        </div>
+        <div class="zoom-controls">
+          <button class="icon-btn" id="zoomOutBtn" title="Уменьшить">&minus;</button>
+          <input type="range" id="zoomSlider" min="10" max="1000" value="100" step="10">
+          <button class="icon-btn" id="zoomInBtn" title="Увеличить">+</button>
+          <button class="icon-btn" id="zoomFitBtn" title="Вписать в экран">Всё</button>
+        </div>
+      </div>
+
+      <div id="waveform"></div>
+      <div id="minimap"></div>
+
+      <div class="legend" id="legend"></div>
+
+      <table class="sub-scores" id="subScoresTable">
+        <thead>
+          <tr><th>Детектор</th><th>Балл</th><th></th><th></th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </section>
+  </main>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
