@@ -194,4 +194,60 @@ button:hover:not(:disabled) { background: #2ea043; }
 .bar-bg { background: #21262d; border-radius: 4px; height: 8px; }
 .bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
 
+/* Info button */
+.info-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; padding: 0; margin-left: 0.35rem;
+  background: #21262d; border: 1px solid #30363d; border-radius: 50%;
+  color: #8b949e; font-size: 0.7rem; font-weight: 700; cursor: pointer;
+  vertical-align: middle; line-height: 1;
+}
+.info-btn:hover { background: #30363d; border-color: #58a6ff; color: #58a6ff; }
+
+/* Docs modal */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: 2rem;
+}
+.modal {
+  background: #161b22; border: 1px solid #30363d; border-radius: 12px;
+  max-width: 680px; width: 100%; max-height: 80vh;
+  display: flex; flex-direction: column; position: relative;
+}
+.modal-close {
+  position: absolute; top: 0.6rem; right: 0.8rem;
+  background: none; border: none; color: #8b949e; font-size: 1.4rem;
+  cursor: pointer; padding: 0.2rem 0.5rem; line-height: 1;
+}
+.modal-close:hover { color: #e1e4e8; background: none; }
+.modal-body {
+  padding: 1.5rem 2rem 2rem; overflow-y: auto;
+  font-size: 0.88rem; line-height: 1.6; color: #c9d1d9;
+}
+.modal-body h3 { font-size: 1.15rem; margin-bottom: 0.8rem; color: #e1e4e8; }
+.modal-body h4 { font-size: 0.95rem; margin: 1.2rem 0 0.4rem; color: #e1e4e8; }
+.modal-body p { margin: 0.4rem 0; }
+.modal-body ol, .modal-body ul { margin: 0.4rem 0 0.4rem 1.2rem; }
+.modal-body li { margin: 0.2rem 0; }
+.modal-body code {
+  background: #0d1117; padding: 0.15rem 0.4rem; border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace; font-size: 0.82rem; color: #79c0ff;
+}
+.modal-body pre {
+  background: #0d1117; padding: 0.7rem 1rem; border-radius: 6px; overflow-x: auto;
+  font-family: 'Consolas', 'Monaco', monospace; font-size: 0.82rem; color: #79c0ff;
+  margin: 0.5rem 0; line-height: 1.5;
+}
+.modal-body table {
+  width: 100%; border-collapse: collapse; margin: 0.5rem 0;
+}
+.modal-body td {
+  padding: 0.35rem 0.6rem; border: 1px solid #21262d; font-size: 0.82rem;
+}
+.modal-body td:first-child { white-space: nowrap; }
+.modal-body td code { background: none; padding: 0; }
+.modal-body strong { color: #e1e4e8; }
+.modal-body em { color: #8b949e; }
+
 .hidden { display: none !important; }

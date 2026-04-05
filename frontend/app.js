@@ -2,16 +2,17 @@ import WaveSurfer from 'https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/wavesu
 import RegionsPlugin from 'https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/plugins/regions.esm.js'
 import Minimap from 'https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/plugins/minimap.esm.js'
 import Timeline from 'https://cdn.jsdelivr.net/npm/wavesurfer.js@7/dist/plugins/timeline.esm.js'
+import { DETECTOR_DOCS } from './docs.js'
 
 const COLORS = {
   clicks:    { bg: 'rgba(248, 81, 73, 0.25)',  solid: '#f85149' },
   noise:     { bg: 'rgba(210, 153, 34, 0.25)', solid: '#d29922' },
   robotic:   { bg: 'rgba(188, 140, 255, 0.25)', solid: '#bc8cff' },
-  smoothing: { bg: 'rgba(88, 166, 255, 0.25)',  solid: '#58a6ff' },
-  buzzing:   { bg: 'rgba(63, 185, 80, 0.25)',   solid: '#3fb950' },
+  bandwidth:     { bg: 'rgba(255, 166, 87, 0.25)',  solid: '#ffa657' },
+  pitch_contour: { bg: 'rgba(255, 110, 182, 0.25)', solid: '#ff6eb6' },
 }
 
-const SUB_KEYS = ['clicks', 'noise', 'robotic', 'smoothing', 'buzzing']
+const SUB_KEYS = ['clicks', 'noise', 'robotic', 'bandwidth', 'pitch_contour']
 
 const SCORE_BANDS = [
   { min: 90, label: 'Отлично', desc: 'Студийное качество, артефакты не обнаружены.' },
@@ -25,16 +26,16 @@ const DETECTOR_NAMES = {
   clicks:    'Щелчки',
   noise:     'Шум',
   robotic:   'Роботичность',
-  smoothing: 'Сглаживание',
-  buzzing:   'Гудение',
+  bandwidth:     'Полоса частот',
+  pitch_contour: 'Контур высоты тона',
 }
 
 const DETECTOR_INFO = {
   clicks:    'Импульсные щелчки и хлопки от сбоев вокодера или границ конкатенации.',
   noise:     'Фоновое шипение или повышенный уровень шума из обучающих данных.',
-  robotic:   'Чрезмерно равномерная высота тона и амплитуда — отсутствие естественных микровариаций.',
-  smoothing: 'Приглушённое, усреднённое звучание из-за статистического сглаживания в модели.',
-  buzzing:   'Избыточная гармоническая регулярность, создающая гудящий или металлический тембр.',
+  robotic:   'Монотонная просодия и плоская интонация — узкий диапазон высоты тона, отсутствие естественной вариативности.',
+  bandwidth:     'Узкая спектральная полоса — потеря высоких частот из-за кодеков или сжатия.',
+  pitch_contour: 'Неестественный контур F0 — плоский, ступенчатый или с периодическим дрожанием высоты тона.',
 }
 
 // DOM refs
@@ -429,13 +430,39 @@ function renderSubScores(data) {
     const s = Math.round(info.score)
     const desc = DETECTOR_INFO[type] || ''
     const name = DETECTOR_NAMES[type] || type
+    const hasDoc = type in DETECTOR_DOCS
+    const infoBtn = hasDoc
+      ? `<button class="info-btn" data-doc-type="${type}" title="Методология">?</button>`
+      : ''
     tbody.innerHTML += `<tr>
-      <td><span class="detector-name">${name}</span><span class="detector-desc">${desc}</span></td>
+      <td><span class="detector-name">${name} ${infoBtn}</span><span class="detector-desc">${desc}</span></td>
       <td>${s}</td>
       <td class="bar-cell"><div class="bar-bg"><div class="bar-fill" style="width:${s}%;background:${color}"></div></div></td>
     </tr>`
   }
+
+  tbody.querySelectorAll('.info-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation()
+      openDocsModal(btn.dataset.docType)
+    })
+  })
 }
+
+// --- Docs modal ---
+const docsModal = document.getElementById('docsModal')
+const docsModalBody = document.getElementById('docsModalBody')
+const docsModalClose = document.getElementById('docsModalClose')
+
+function openDocsModal(type) {
+  docsModalBody.innerHTML = DETECTOR_DOCS[type] || ''
+  docsModal.classList.remove('hidden')
+}
+
+docsModalClose.addEventListener('click', () => docsModal.classList.add('hidden'))
+docsModal.addEventListener('click', (e) => {
+  if (e.target === docsModal) docsModal.classList.add('hidden')
+})
 
 // --- Helpers ---
 function escHtml(s) {
