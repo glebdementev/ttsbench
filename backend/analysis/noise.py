@@ -51,12 +51,16 @@ class NoiseDetector(BaseDetector):
         median_flatness = float(np.median(frame_flatness))
 
         # Score: low flatness = clean, high flatness = noisy
-        # <=0.65 → 100 (clean structured HF rolloff)
-        # >=0.85 → 0   (noise-like flat spectrum)
-        score = float(np.clip((0.85 - median_flatness) / 0.20 * 100, 0, 100))
+        # <=0.74 → 100 (чистый речевой спектр с естественным ВЧ-содержанием)
+        # >=0.82 → 0   (плоский шумоподобный спектр — утечка шума из референса)
+        # Порог 0.74 отделяет движки с широкополосным синтезом (ElevenLabs и т.п.)
+        # от реально шумных (SciCom, XTTS), у которых flatness >0.76.
+        score = float(np.clip((0.82 - median_flatness) / 0.08 * 100, 0, 100))
 
         # Region detection: flag speech frames with elevated flatness
-        noisy_threshold = 0.75
+        # Порог 0.80 — только явно шумные кадры, чтобы не помечать
+        # легитимное ВЧ-содержание как шум
+        noisy_threshold = 0.80
         noisy_mask = frame_flatness > noisy_threshold
         noisy_frame_pct = float(np.sum(noisy_mask) / len(frame_flatness) * 100)
 
@@ -69,7 +73,7 @@ class NoiseDetector(BaseDetector):
                 if len(indices) < 3:
                     continue
                 local_flat = float(np.mean(vals))
-                severity = "high" if local_flat > 0.82 else "medium" if local_flat > 0.75 else "low"
+                severity = "high" if local_flat > 0.85 else "medium" if local_flat > 0.80 else "low"
                 regions.append(ArtifactRegion(
                     start=round(indices[0] * hop_dur, 4),
                     end=round((indices[-1] + 1) * hop_dur, 4),
