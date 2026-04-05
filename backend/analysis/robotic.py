@@ -41,24 +41,30 @@ class RoboticDetector(BaseDetector):
         # --- Spectral dynamics (timbral variation over time) ---
         spec_flux, centroid_cv = self._spectral_dynamics(y, sr)
 
+        # --- Formant variation (articulation naturalness) ---
+        f1_cv = self._formant_variation(sound)
+
         # --- Score components ---
         rhythm_score = _trapezoid(seg_cv, 0.45, 0.70, 1.3, 1.6)
         contour_score = _trapezoid(dir_chg_per_sec, 10, 14, 22, 28)
         flux_score = _sigmoid_score(spec_flux, midpoint=0.080, steepness=200)
         centroid_score = _sigmoid_score(centroid_cv, midpoint=0.72, steepness=25)
+        formant_score = _sigmoid_score(f1_cv, midpoint=0.60, steepness=25)
 
         score = (
-            0.25 * rhythm_score
-            + 0.20 * contour_score
-            + 0.30 * flux_score
+            0.15 * rhythm_score
+            + 0.15 * contour_score
+            + 0.25 * flux_score
             + 0.25 * centroid_score
+            + 0.20 * formant_score
         )
 
         # --- Flag regions ---
         is_monotone = seg_cv < 0.65 or dir_chg_per_sec < 13
         is_metallic = spec_flux < 0.078 or centroid_cv < 0.70
+        is_stiff = f1_cv < 0.58
 
-        if is_monotone or is_metallic:
+        if is_monotone or is_metallic or is_stiff:
             parts = []
             if seg_cv < 0.65:
                 parts.append(f"seg_cv {seg_cv:.2f}")
@@ -68,9 +74,16 @@ class RoboticDetector(BaseDetector):
                 parts.append(f"flux {spec_flux:.4f}")
             if centroid_cv < 0.70:
                 parts.append(f"cent_cv {centroid_cv:.2f}")
+            if f1_cv < 0.58:
+                parts.append(f"f1_cv {f1_cv:.2f}")
 
             severity = "high" if (is_monotone and is_metallic) else "medium"
-            label_prefix = "robotic" if is_metallic else "monotone rhythm"
+            if is_metallic:
+                label_prefix = "robotic"
+            elif is_stiff:
+                label_prefix = "stiff articulation"
+            else:
+                label_prefix = "monotone rhythm"
             regions.append(ArtifactRegion(
                 start=0, end=round(duration, 4),
                 severity=severity,
@@ -86,19 +99,36 @@ class RoboticDetector(BaseDetector):
                 "dir_chg_per_sec": round(dir_chg_per_sec, 1),
                 "spec_flux": round(spec_flux, 4),
                 "centroid_cv": round(centroid_cv, 4),
+                "f1_cv": round(f1_cv, 4),
             },
         )
 
     @staticmethod
+    def _formant_variation(sound) -> float:
+        """CV of F1 frequency across voiced frames — low = stiff articulation."""
+        formant = call(sound, "To Formant (burg)", 0.0, 5, 5500, 0.025, 50)
+        n_frames = call(formant, "Get number of frames")
+        f1_vals = []
+        step = max(1, n_frames // 2000)  # cap at ~2000 samples
+        for i in range(1, n_frames + 1, step):
+            t = call(formant, "Get time from frame number", i)
+            f1 = call(formant, "Get value at time", 1, t, "Hertz", "Linear")
+            if f1 and not np.isnan(f1) and f1 > 0:
+                f1_vals.append(f1)
+        if len(f1_vals) < 20:
+            return 0.65  # neutral default
+        arr = np.array(f1_vals)
+        return float(np.std(arr) / (np.mean(arr) + 1e-10))
+
+    @staticmethod
     def _spectral_dynamics(y: np.ndarray, sr: int) -> tuple[float, float]:
-        """Spectral flux and centroid CV over voiced frames."""
+        """Spectral flux and centroid CV."""
         S = np.abs(librosa.stft(y, n_fft=2048, hop_length=512))
         rms = librosa.feature.rms(y=y, frame_length=2048, hop_length=512)[0]
         voiced = rms > np.percentile(rms, 30)
         voiced = voiced[:S.shape[1]]
 
-        # Spectral flux on normalized spectra (all frames — silence
-        # drag reveals lack of overall spectral dynamism)
+        # Spectral flux on normalized spectra (all frames)
         S_norm = S / (S.sum(axis=0, keepdims=True) + 1e-10)
         flux_all = np.sqrt(np.sum(np.diff(S_norm, axis=1) ** 2, axis=0))
         spec_flux = float(np.mean(flux_all))
